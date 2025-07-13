@@ -1,0 +1,16 @@
+{
+    "name": "azcray0p/aplicacion2",
+    "description": "Una aplicación desarrollada con PHP para aprender poco a poco como desarrollador :D",
+    "autoload": {
+        "psr-4": {
+            "Azcray0p\\Aplicacion2\\": "clases/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Azcray Tech",
+            "email": "djtejedoromero2015@gmail.com"
+        }
+    ],
+    "require": {}
+}
