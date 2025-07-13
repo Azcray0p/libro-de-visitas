@@ -1,4 +1,22 @@
 <?php
+try {
+    $pdo = new PDO('sqlite:visitantes.db');
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    } catch (PDOException $e) {
+        die("Error al conectar a la base de datos: " . $e->getMessage());
+    }
+
+try {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS visitantes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT NOT NULL,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
+    );");
+}   catch (PDOException $e) {
+    die("Error al crear la tabla: " . $e->getMessage());
+}
+
 $mensajeFinal = "";
 $saludo = "¡Hola, ";
 
@@ -7,9 +25,15 @@ if (isset($_POST['name']) && !empty($_POST['name'])) {
     $nombre = htmlspecialchars($_POST['name']);
     $mensajeFinal = $saludo . $nombre . "! Bienvenido a nuestra aplicación.";
 
-    $guardarNombre = $nombre . "\n";
-    // Guardar el nombre en un archivo de texto (FILE_APPEND asegura que se añada al final.)
-    file_put_contents('visitantes.txt', $guardarNombre, FILE_APPEND);
+    // Preparar la consulta SQL para insertar el nombre en la base de datos
+    try {
+        $sql_insert = "INSERT INTO visitantes (nombre) VALUES (:nombre)";
+        $stmt = $pdo->prepare($sql_insert);
+        $stmt->execute(['nombre' => $nombre]);
+
+    } catch (PDOException $e) {
+        die("Error al insertar el nombre: " . $e->getMessage());
+    }
 
 } else {
     $mensajeFinal = "Por favor, ingresa tu nombre.";
@@ -37,24 +61,15 @@ if (isset($_POST['name']) && !empty($_POST['name'])) {
 
     <?php
 
-    $archivoVisitantes = 'visitantes.txt';
-    // file_exists() verifica si el archivo existe
-    if (file_exists($archivoVisitantes)) {
+    // Consultar los nombres de los visitantes anteriores
+    $sql_query = "SELECT nombre, fecha_registro FROM visitantes ORDER BY fecha_registro DESC";
+    $stmt = $pdo->query($sql_query);
 
-        // la función file() se utiliza para leer el contenido de un archivo y almacenarlo en un array.
-        $visitantes = file($archivoVisitantes) ;
-
-        echo "<ul>";
-        // foreach es una estructura que permite recorrer todos los elementos de un array o colección.
-        // $visitantes es el array principal que contiene datos, por ejemplo, una lista de personas.
-        // $visitante es una variable temporal que representa cada elemento del array durante la iteración.
-        foreach ($visitantes as $visitante) {
-            echo "<li>" . htmlspecialchars($visitante) . "</li>";
-        }
-        echo "</ul>";
-    } else {
-        echo "<p>No hay visitantes registrados aún.</p>";
+    echo "<ul>";
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        echo "<li>" . htmlspecialchars($row['nombre']) . " <small> (Registrado el: " . htmlspecialchars($row['fecha_registro']) . ") </small> </li>";
     }
+    echo "</ul>";
 
     ?>
 
